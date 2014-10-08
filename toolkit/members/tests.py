@@ -1,5 +1,6 @@
 import shutil
 import urllib
+import base64
 import os.path
 import tempfile
 import smtplib
@@ -1468,14 +1469,16 @@ class TestMemberMailoutTask(MembersTestsMixin, TestCase):
         self.assertFalse(message.is_multipart())
         if is_utf8:
             self.assertEqual(message.get_charsets(), ["utf-8"])
-            self.assertEqual(message['Content-Transfer-Encoding'], '8bit')
+            self.assertEqual(message['Content-Transfer-Encoding'], 'base64')
+            body = base64.b64decode(message.get_payload()).decode("utf-8")
         else:
             self.assertEqual(message.get_charsets(), ["us-ascii"])
             self.assertEqual(message['Content-Transfer-Encoding'], '7bit')
+            body = message.get_payload().decode("ascii")
+
         self.assertEqual(message['From'], from_addr)
         self.assertEqual(message['To'], dest_addr)
 
-        body = message.get_payload().decode("utf-8")
         subject = email.header.decode_header(message['Subject'])
 
         self.assertIn(body_contains, body)
@@ -1504,12 +1507,23 @@ class TestMemberMailoutTask(MembersTestsMixin, TestCase):
         summary_mail_call = conn.sendmail.call_args_list[6]
         self.assertEqual(summary_mail_call[0][0], settings.MAILOUT_FROM_ADDRESS)
         self.assertEqual(summary_mail_call[0][1], [settings.MAILOUT_DELIVERY_REPORT_TO])
+        # Check mail twice, to check for each bit of expected text in the body;
+        # The mail count:
         self._assert_mail_as_expected(
             summary_mail_call[0][2],
             is_utf8,
             settings.MAILOUT_FROM_ADDRESS,
             settings.MAILOUT_DELIVERY_REPORT_TO,
             u"6 copies of the following were sent out on cube members list",
+            subject
+        )
+        # And the actual body text:
+        self._assert_mail_as_expected(
+            summary_mail_call[0][2],
+            is_utf8,
+            settings.MAILOUT_FROM_ADDRESS,
+            settings.MAILOUT_DELIVERY_REPORT_TO,
+            body,
             subject
         )
 
