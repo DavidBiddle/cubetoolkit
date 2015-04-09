@@ -1,4 +1,4 @@
-{% load strip_lines %}{# This is a bit gnarly in places, because newlines are significant... #}
+{% load showing_date_format %}{% load strip_lines %}{# This is a bit gnarly in places, because newlines are significant... #}
 CUBE PROGRAMME OF EVENTS
 
 http://www.cubecinema.com/programme/
@@ -15,34 +15,36 @@ http://www.cubecinema.com/programme/
   {{ showing.start|date:"D"}} {{ showing.start|date:"d" }}{% else %}        {% endifchanged %} {{showing.start|date:"H:i"}} ........ {% if showing.hide_in_programme or showing.event.private %}Closed for private event.{% else %}{{ showing.event.name|capfirst }}{% if showing.cancelled %} (CANCELLED){% endif %}{% if showing.discounted %} (TTT){% endif %}{% endif %}
 {% endfor %}
 {% endfilterblanklines %}
+
+For complete listings including all future events, please visit:
+http://www.cubecinema.com/programme/
 {% filtermultipleblanklines %}
-{% for showing in showings.public %}{% ifchanged %}------------------------------------------------------------------------------
+{% for showing in showings_details %}{% ifchanged %}----------------------------------------------------------------------------
 
 {% if showing.event.pre_title %}{{ showing.event.pre_title }}:
 {% endif %}{{ showing.event.name|upper }}
  {{ showing.event.post_title }}
 {% if showing.event.film_information %}{{ showing.event.film_information }} {% endif %}
 
-{% filterblanklines %}
-{% for showing in showing.event.showings.public %}
-{{ showing.start|date:"D j F, g:i A" }}
-{% endfor %}
-{% endfilterblanklines %}
+{{ showing.event.showings.public|showingdates }}
 {% if showing.event.pricing %}Tickets: {{ showing.event.pricing }}{% endif %}
 
 {{ showing.event.copy_plaintext }}
 {% endifchanged %}
 {% endfor %}
+
 --
 {% endfiltermultipleblanklines %}
+For complete and up to date listings, please visit:
+http://www.cubecinema.com/programme/
 
-Cube Cinema Microplex
+Cube Microplex Cinema
 is located at:
 Dove Street South
 Bristol
 BS2 8JD
 
-postal:
+Postal:
 4 Princess Row
 Bristol
 BS2 8NQ

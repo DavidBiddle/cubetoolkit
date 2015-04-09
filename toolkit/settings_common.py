@@ -63,6 +63,13 @@ EMAIL_UNSUBSCRIBE_HOST = "cubecinema.com"
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
 
+# Default number of days ahead for which to include detailed copy in the
+# member's mailout
+MAILOUT_DETAILS_DAYS_AHEAD = 9
+# Default number of days ahead for which to include listings in the member'sm
+# mailout
+MAILOUT_LISTINGS_DAYS_AHEAD = 14
+
 # Default address to which reports of a successful mailout delivery are sent:
 MAILOUT_DELIVERY_REPORT_TO = u"cubeadmin@cubecinema.com"
 # "From" address for mailout
@@ -70,7 +77,7 @@ MAILOUT_FROM_ADDRESS = u"mailout@cubecinema.com"
 
 # The maximum number of each type of role that can be assigned to a showing
 # (so, for example, can't have more than this number of bar staff)
-MAX_COUNT_PER_ROLE = 6
+MAX_COUNT_PER_ROLE = 8
 
 # Probably don't want to change these: subdirectories of MEDIA directory where
 # volunteer images get saved:
@@ -297,7 +304,14 @@ LOGGING = {
             'format': '%(asctime)s %(module)s %(funcName)s %(levelname)s : %(message)s',
         },
     },
-
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
     'handlers': {
         'console': {
             'level': 'DEBUG',
@@ -315,6 +329,11 @@ LOGGING = {
             'mode': 'a',
             'maxBytes': 10485760,
             'backupCount': 5,
+        },
+        'mail_admins' : {
+            'level': 'ERROR',
+            'filters': ['require_debug_false'],
+            'class': 'django.utils.log.AdminEmailHandler',
         },
         # 'null': {
         #     'level': 'DEBUG',

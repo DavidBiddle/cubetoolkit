@@ -697,6 +697,38 @@ def printed_programme_edit(request, operation):
     return render(request, 'form_printedprogramme_archive.html', context)
 
 
+@permission_required('toolkit.read')
+def view_rota_vacancies(request):
+    days_ahead = 6
+    start = timezone.now()
+    end_date = start + datetime.timedelta(days=days_ahead)
+    showings = (Showing.objects.not_cancelled()
+                               .confirmed()
+                               .start_in_range(start, end_date)
+                               .order_by('start')
+                               .prefetch_related('rotaentry_set__role')
+                               .select_related())
+    showings_vacant_roles = OrderedDict(
+        (
+            showing,
+            showing.rotaentry_set.filter(Q(name="") | Q(name__isnull=True))
+        ) for showing in showings
+    )
+
+    # Surprisingly round-about way to get tomorrow's date:
+    now_local = django.utils.timezone.localtime(django.utils.timezone.now())
+
+    context = {
+        'days_ahead': days_ahead,
+        'now': now_local,
+        'now_plus_1d': now_local + datetime.timedelta(days=1),
+        'rota_edit_url': request.build_absolute_uri(reverse("rota-edit")),
+        'showings_vacant_roles': showings_vacant_roles,
+    }
+
+    return render(request, u'view_rota_vacancies.html', context)
+
+
 class EditRotaView(View):
     """Handle the "edit rota" page."""
 
@@ -711,12 +743,17 @@ class EditRotaView(View):
         now_local = django.utils.timezone.localtime(django.utils.timezone.now())
         # Create a new local time with hour/min/sec set to zero:
         current_tz = django.utils.timezone.get_current_timezone()
-        start_date = current_tz.localize(datetime.datetime(
+        today_local_date = current_tz.localize(datetime.datetime(
             now_local.year, now_local.month, now_local.day))
+        yesterday_local_date = today_local_date - datetime.timedelta(days=1)
 
         query_days_ahead = request.GET.get('daysahead', None)
         start_date, days_ahead = get_date_range(
             year, month, day, query_days_ahead, default_days_ahead=30)
+
+        # Don't allow data from before yesterday to be displayed:
+        if start_date < yesterday_local_date:
+            start_date = yesterday_local_date
 
         end_date = start_date + datetime.timedelta(days=days_ahead)
         showings = (Showing.objects.not_cancelled()
@@ -793,3 +830,7 @@ def edit_showing_rota_notes(request, showing_id):
     response = escape(showing.rota_notes)
 
     return HttpResponse(escape(response), content_type="text/plain")
+
+@permission_required('toolkit.write')
+def view_force_error(request):
+    raise AssertionError("Forced exception")

@@ -31,7 +31,7 @@ programme_urls = patterns(
     url(r'^showing/id/(?P<showing_id>\d+)/$', 'view_showing', name="single-showing-view"),
     # All showings for a given event
     url(r'^event/id/(?P<event_id>\d+)/$', 'view_event', name="single-event-view"),
-    url(r'^event/(?P<event_slug>[\w\-_]+),(?P<event_id>\d+)/$', 'view_event', name="single-event-view-with-slug"),
+    url(r'^event/(?P<event_slug>[\w\-_]*),(?P<event_id>\d+)/$', 'view_event', name="single-event-view-with-slug"),
     # As above, for legacy event ID:
     url(r'^event/oldid/(?P<legacy_id>\d+)/$', 'view_event', name="single-event-view-legacyid"),
 
@@ -103,12 +103,17 @@ diary_urls = patterns(
     url(r"^edit/rota(/|/(?P<year>\d{4})/(?P<month>\d{1,2})/?(?P<day>(?<=/)\d{0,2})?/?)?$$",
         EditRotaView.as_view(), name="rota-edit"),
 
+    url(r"^rota/vacancies$", 'view_rota_vacancies', name="view-rota-vacancies"),
+
     # Ajax calls:
     url("^edit/setprefs$", 'set_edit_preferences', name="set_edit_preferences"),
 
     # Printed programme archive edit/upload:
     url("^printedprogrammes$", 'printed_programme_edit', name="edit-printed-programmes", kwargs={'operation': 'edit'}),
     url("^printedprogrammes/add$", 'printed_programme_edit', name="add-printed-programme", kwargs={'operation': 'add'}),
+
+    # Force a 500 error, to test error emailing
+    url(r'error/$', 'view_force_error'),
 )
 
 diary_urls += patterns(
